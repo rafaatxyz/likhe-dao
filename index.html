@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+	<!-- Required meta tags -->
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<!-- Bootstrap CSS -->
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+		integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+
+	<title>Likhe Dao - লিখে দাও</title>
+
+	<style>
+		#content{ font-size: 36px;}
+		.button-icon{ width:32px; filter: invert(1) }
+		.btn{ border-radius: 50%; width: 48px; height: 48px; padding:0}
+		.btn-lg{ width: 72px; height: 72px;}
+		small{ font-size: 1rem;}
+		
+	</style>
+</head>
+
+<body class="bg-light">
+	
+	<div class="container w-md-75">
+		<div class="card my-5">
+			<div class="card-body">
+				<div id="content">
+					<small class="text-muted">Press the microphone button to start voice typing.</small>
+				</div>
+			</div>
+		</div>
+		<div id="controls" class="d-flex text-center" style="justify-content: space-around;">
+			<button class="btn btn-primary" onclick="cleanOutput(event)">
+				<img src="/trash.svg" class="button-icon">
+			</button>
+			<button class="btn btn-primary btn-lg" id="start_button" onclick="startButton(event)">
+				<img src="/microphone.svg" class="button-icon" style="width:64px">
+			</button>
+			<button class="btn btn-primary btn" onclick="undoInput()">
+				<img src="/redo.svg" class="button-icon">
+			</button>
+		</div>
+	</div>
+
+	<script>
+		let texts = [];
+		const content = document.querySelector('#content');
+		const btnStart = document.querySelector('#start_button');
+		let fontSize = "54";
+		var final_transcript = '';
+		var recognizing = false;
+		var ignore_onend;
+		var start_timestamp;
+		var recognition = new webkitSpeechRecognition();
+		recognition.continuous = true;
+		recognition.interimResults = true;
+
+		content.style.fontSize = fontSize + "px";
+
+		recognition.onstart = function () {
+			recognizing = true;
+			// showInfo('info_speak_now');
+			// start_img.src = 'mic-animate.gif';
+		};
+
+		recognition.onerror = function (event) {
+			if (event.error == 'no-speech') {
+				// start_img.src = 'mic.gif';
+				// showInfo('info_no_speech');
+				ignore_onend = true;
+			}
+			if (event.error == 'audio-capture') {
+				// start_img.src = 'mic.gif';
+				// showInfo('info_no_microphone');
+				ignore_onend = true;
+			}
+			if (event.error == 'not-allowed') {
+				if (event.timeStamp - start_timestamp < 100) {
+					// showInfo('info_blocked');
+				} else {
+					// showInfo('info_denied');
+				}
+				ignore_onend = true;
+			}
+		};
+
+		recognition.onend = function () {
+			recognizing = false;
+			if (ignore_onend) {
+				return;
+			}
+			// start_img.src = 'mic.gif';
+			if (!final_transcript) {
+				// showInfo('info_start');
+				return;
+			}
+			// showInfo('');
+			if (window.getSelection) {
+				window.getSelection().removeAllRanges();
+				var range = document.createRange();
+				// range.selectNode(document.getElementById('final_span'));
+				window.getSelection().addRange(range);
+			}
+			// if (create_email) {
+			// 	create_email = false;
+			// 	createEmail();
+			// }
+		};
+
+		recognition.onresult = function (event) {
+			var interim_transcript = '';
+			for (var i = event.resultIndex; i < event.results.length; ++i) {
+				if (event.results[i].isFinal) {
+					final_transcript += event.results[i][0].transcript;
+				} else {
+					interim_transcript += event.results[i][0].transcript;
+				}
+			}
+			// final_transcript = capitalize(final_transcript);
+			// console.log(final_transcript);
+
+			// final_span.innerHTML = linebreak(final_transcript);
+			// interim_span.innerHTML = linebreak(interim_transcript);
+			final_transcript = final_transcript.trim();
+			if(!final_transcript) return;
+			
+			if( texts.indexOf(final_transcript)==-1) texts.push(final_transcript);
+			_print();
+		};
+
+		function undoInput(){
+			texts.pop();
+			_print();
+		}
+
+		function cleanOutput(){
+			texts = [];
+			content.innerHTML = '<small class="text-muted">Press the microphone button to start voice typing.</small>';
+		}
+
+		function _print(){
+			content.innerHTML = texts.join("<br><br>");
+		}
+
+		function startButton(event) {
+			btnStart.classList.toggle('btn-danger');
+			btnStart.classList.toggle('btn-primary');
+
+			if (recognizing) {
+				recognition.stop();
+				return;
+			}
+			final_transcript = '';
+			recognition.lang = 'bn-BD';
+			recognition.start();
+			ignore_onend = false;
+			// final_span.innerHTML = '';
+			// interim_span.innerHTML = '';
+			// start_img.src = 'mic-slash.gif';
+			// showInfo('info_allow');
+			// showButtons('none');
+			start_timestamp = event.timeStamp;
+		}
+	</script>
+
+
+	<!-- Optional JavaScript; choose one of the two! -->
+
+	<!-- Option 1: Bootstrap Bundle with Popper -->
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+		integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+		crossorigin="anonymous"></script>
+
+	<!-- Option 2: Separate Popper and Bootstrap JS -->
+	<!--
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js" integrity="sha384-IQsoLXl5PILFhosVNubq5LC7Qb9DXgDA9i+tQ8Zj3iwWAwPtgFTxbJ8NT4GN1R8p" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.min.js" integrity="sha384-cVKIPhGWiC2Al4u+LWgxfKTRIcfu0JTxR+EQDz/bgldoEyl4H0zUF0QKbrJ0EcQF" crossorigin="anonymous"></script>
+    -->
+</body>
+
+</html>
